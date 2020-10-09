@@ -1,0 +1,49 @@
+{
+    "augmentations" :
+    [
+        {
+            "name" : "translation",
+            "run" : true,
+            "args" : 
+            {
+                "t1" : 0.3,
+                "t2" : 0.3
+            }
+        },
+        {
+            "name" : "scale",
+            "run" : true,
+            "args" : 
+            {
+                "a1" : 0.5,
+                "a2" : 1.5
+            }
+        },
+        {
+            "name" : "shear",
+            "run" : true,
+            "args" : 
+            {
+                "a": 0.2,
+                "b": 0.4
+            }
+        },
+        {
+            "name" : "rotate",
+            "run" : true,
+            "args" : 
+            {
+                "angle": 90
+            }
+        },
+        {
+            "name" : "flip",
+            "run" : true,
+            "args" : 
+            {
+                "mode" : -1
+            }
+        }
+    ]
+    
+}
