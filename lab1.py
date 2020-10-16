@@ -47,6 +47,22 @@ class Augmentations:
         img_flip = cv2.flip(image, mode)
         return img_flip
 
+    def gausianBlur(self, image, ksize):
+        if (ksize % 2 == 0):
+            ksize += 1
+        img_rez = cv2.GaussianBlur(image,(ksize,ksize),cv2.BORDER_DEFAULT)
+        return img_rez
+
+    def medianFilter(self, image, coef):
+        if (coef % 2 == 0):
+            coef += 1
+        img_rez = cv2.medianBlur(image,coef)
+        return img_rez
+
+    def bilateralFilter(self, image, diameter, sigmaColor):
+        img_bilateral = cv2.bilateralFilter(image, diameter, sigmaColor, sigmaColor) 
+        return img_bilateral
+
 Augments = Augmentations()
 
 def call_augmentation(o, name, image, args):
@@ -70,13 +86,18 @@ def write_images_to_folder(folder, images):
         os.mkdir(new_folder)
     config = read_config()['augmentations']
 
-    for aug_cfg in config:
-        if aug_cfg['run']:
-            aug_name = aug_cfg['name']
-            aug_args = aug_cfg['args']
+    for aug_list in config:
+        if aug_list['run']:
             for image in images:
-                new_name = image['path'].replace('.jpg',"_" + aug_name + "_" + str(count) + ".jpg")
-                cv2.imwrite(os.path.join(new_folder,new_name), call_augmentation(Augments, aug_name, image['data'], aug_args))
+                img = image['data']
+                new_name = image['path']
+                for aug_cfg in aug_list['augs']:
+                    aug_name = aug_cfg['name']
+                    aug_args = aug_cfg['args']
+                    new_name = new_name.replace('.jpg',"_" + aug_name + ".jpg")
+                    img = call_augmentation(Augments, aug_name, img, aug_args)
+                new_name = new_name.replace('.jpg',"_" + str(count) + ".jpg")
                 count += 1
+                cv2.imwrite(os.path.join(new_folder,new_name), img)
 
 write_images_to_folder(root.directoryname, images)
