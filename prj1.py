@@ -47,7 +47,7 @@ class Augmentations:
         img_flip = cv2.flip(image, mode)
         return img_flip
 
-    def gausianBlur(self, image, ksize):
+    def gaussianBlur(self, image, ksize):
         if (ksize % 2 == 0):
             ksize += 1
         img_rez = cv2.GaussianBlur(image,(ksize,ksize),cv2.BORDER_DEFAULT)
@@ -62,6 +62,12 @@ class Augmentations:
     def bilateralFilter(self, image, diameter, sigmaColor):
         img_bilateral = cv2.bilateralFilter(image, diameter, sigmaColor, sigmaColor) 
         return img_bilateral
+    
+    def adjust_gamma(self, image, gamma):
+        invGamma = 1.0 / gamma
+        table = np.array([((i / 255.0) ** invGamma) * 255
+            for i in np.arange(0, 256)]).astype("uint8")
+        return cv2.LUT(image, table)
 
 Augments = Augmentations()
 

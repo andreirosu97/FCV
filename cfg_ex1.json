@@ -1,0 +1,64 @@
+{
+    "augmentations": [{
+        "run": true,
+        "augs": [{
+                "name": "translation",
+                "args": {
+                    "t1": 0.1,
+                    "t2": 0.1
+                }
+            },
+            {
+                "name": "scale",
+                "args": {
+                    "a1": 1,
+                    "a2": 1.3
+                }
+            },
+            {
+                "name": "shear",
+                "args": {
+                    "a": 0.5,
+                    "b": 0.3
+                }
+            },
+            {
+                "name": "rotate",
+                "args": {
+                    "angle": 60
+                }
+            },
+            {
+                "name": "flip",
+                "args": {
+                    "mode": 1
+                }
+            },
+            {
+                "name": "gaussianBlur",
+                "args": {
+                    "ksize": 5
+                }
+            },
+            {
+                "name": "medianFilter",
+                "args": {
+                    "coef": 5
+                }
+            },
+            {
+                "name": "bilateralFilter",
+                "args": {
+                    "diameter": 4,
+                    "sigmaColor": 3
+                }
+            },
+            {
+                "name": "adjust_gamma",
+                "args": {
+                    "gamma": 4
+                }
+            }
+        ]
+    }]
+}

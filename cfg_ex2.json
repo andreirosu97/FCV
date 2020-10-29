@@ -14,13 +14,6 @@
                         "a1": 0.5,
                         "a2": 1.5
                     }
-                },
-                {
-                    "name": "bilateralFilter",
-                    "args": {
-                        "diameter": 4,
-                        "sigmaColor": 3
-                    }
                 }
             ]
         },
