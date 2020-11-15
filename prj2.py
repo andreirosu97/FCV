@@ -1,109 +1,70 @@
 import numpy as np
-import cv2
+import cv2 as cv
 from tkinter import *
 from tkinter import filedialog
 import os
 import json 
+from matplotlib import pyplot as plt
 
-root = Tk()
-root.directoryname = filedialog.askdirectory()
-count = 1
+cap = cv.VideoCapture(1)
+width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
 
-def read_config():
-    with open('cfg.json') as json_file: 
-        data = json.load(json_file) 
-    return data
+out = cv.VideoWriter('outpy.avi',cv.VideoWriter_fourcc('M','J','P','G'), 20, (width,height))
 
-class Augmentations:
-    def translation(self, image, t1, t2):
-        height, width = image.shape[:2] 
-        transaltion_height, transaltion_width = height * t1, width * t2
-        T = np.float32([[1, 0, transaltion_width], [0, 1, transaltion_height]])
-        img_translation = cv2.warpAffine(image, T, (width, height))
-        return img_translation
+if not cap.isOpened():
+    print("Cannot open camera")
+    exit()
 
-    def scale(self, image, a1, a2):
-        height, width = image.shape[:2] 
-        scale_width, scale_height = int(width * a1), int(height * a2)
-        img_scaled = cv2.resize(image, (scale_width, scale_height), interpolation = cv2.INTER_AREA)
-        return img_scaled
+i = 0
+ret, frame = cap.read()
+    # if frame is read correctly ret is True
+if not ret:
+    print("Can't receive frame (stream end?). Exiting ...")
+    exit(1)
 
-    def shear(self, image, a, b):
-        height, width = image.shape[:2] 
-        T = np.float32([[1, a, 0], [b, 1, 0]])
-        T[0,2] = -T[0,1] * width/2
-        T[1,2] = -T[1,0] * height/2
-        img_shear = cv2.warpAffine(image, T, (width, height))
-        return img_shear
+previous_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+previous_frame = cv.GaussianBlur(previous_frame,(21,21),0)
+i = 0
+while True:
+    ret, frame = cap.read()
+    #skip one frame
+    if (i==0):
+        i = 1
+        continue
+    else:
+        i = 0
 
-    def rotate(self, image, angle):
-        height, width = image.shape[:2] 
-        T = cv2.getRotationMatrix2D(((width-1)/2.0,(height-1)/2.0),angle,1)
-        img_rotate = cv2.warpAffine(image, T, (width, height))
-        return img_rotate
+    if not ret:
+        print("Can't receive frame (stream end?). Exiting ...")
+        break
 
-    def flip(self, image, mode):
-        height, width = image.shape[:2] 
-        img_flip = cv2.flip(image, mode)
-        return img_flip
+    #getting the frame
+    color_frame = frame.copy()
+    frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-    def gaussianBlur(self, image, ksize):
-        if (ksize % 2 == 0):
-            ksize += 1
-        img_rez = cv2.GaussianBlur(image,(ksize,ksize),cv2.BORDER_DEFAULT)
-        return img_rez
+    #frame alterations
+    frame = cv.GaussianBlur(frame,(21,21),0) #removes noise
 
-    def medianFilter(self, image, coef):
-        if (coef % 2 == 0):
-            coef += 1
-        img_rez = cv2.medianBlur(image,coef)
-        return img_rez
+    #thresholding
+    frame_diff = cv.absdiff(frame, previous_frame)
+    ret,threshold = cv.threshold(frame_diff,25,255,cv.THRESH_BINARY)
+    threshold = cv.dilate(threshold, None, iterations=2)
 
-    def bilateralFilter(self, image, diameter, sigmaColor):
-        img_bilateral = cv2.bilateralFilter(image, diameter, sigmaColor, sigmaColor) 
-        return img_bilateral
-    
-    def adjust_gamma(self, image, gamma):
-        invGamma = 1.0 / gamma
-        table = np.array([((i / 255.0) ** invGamma) * 255
-            for i in np.arange(0, 256)]).astype("uint8")
-        return cv2.LUT(image, table)
+    avg = np.average(threshold)
+    if (avg <= 0.1):
+        cv.line(color_frame,(0,0),(width, height),(0,0,255),5)
+        cv.line(color_frame,(width,0),(0, height),(0,0,255),5)
+    else:
+        out.write(color_frame)
 
-Augments = Augmentations()
+    previous_frame = frame.copy()
+    cv.imshow('frame', color_frame)
+    cv.imshow('threshold', threshold)
 
-def call_augmentation(o, name, image, args):
-    kwargs = args
-    return getattr(o, name)(image, **kwargs)
+    if cv.waitKey(1) == ord('q'):
+        break
 
-def load_images_from_folder(folder):
-    images = []
-    for filename in os.listdir(folder):
-        img = cv2.imread(os.path.join(folder,filename))
-        if img is not None:
-            images.append({"path" : filename, "data": img})
-    return images
-
-images = load_images_from_folder(root.directoryname)
-
-def write_images_to_folder(folder, images):
-    global count
-    new_folder = folder + "_aug"
-    if not os.path.exists(new_folder):
-        os.mkdir(new_folder)
-    config = read_config()['augmentations']
-
-    for aug_list in config:
-        if aug_list['run']:
-            for image in images:
-                img = image['data']
-                new_name = image['path']
-                for aug_cfg in aug_list['augs']:
-                    aug_name = aug_cfg['name']
-                    aug_args = aug_cfg['args']
-                    new_name = new_name.replace('.jpg',"_" + aug_name + ".jpg")
-                    img = call_augmentation(Augments, aug_name, img, aug_args)
-                new_name = new_name.replace('.jpg',"_" + str(count) + ".jpg")
-                count += 1
-                cv2.imwrite(os.path.join(new_folder,new_name), img)
-
-write_images_to_folder(root.directoryname, images)
+cap.release()
+out.release()
+cv.destroyAllWindows()
