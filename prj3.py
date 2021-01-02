@@ -24,7 +24,7 @@ if not ret:
     exit(1)
 
 previous_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-previous_frame = cv.GaussianBlur(previous_frame,(21,21),0)
+previous_frame = cv.GaussianBlur(previous_frame,(17,17),0)
 i = 0
 while True:
     ret, frame = cap.read()
@@ -44,15 +44,14 @@ while True:
     frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
     #frame alterations
-    frame = cv.GaussianBlur(frame,(21,21),0) #removes noise
+    frame = cv.GaussianBlur(frame,(17,17),0) #removes noise
 
     #thresholding
     frame_diff = cv.absdiff(frame, previous_frame)
     ret,threshold = cv.threshold(frame_diff,25,255,cv.THRESH_BINARY)
-    threshold = cv.dilate(threshold, None, iterations=2)
 
     avg = np.average(threshold)
-    if (avg <= 0.1):
+    if (avg <= 0):
         cv.line(color_frame,(0,0),(width, height),(0,0,255),5)
         cv.line(color_frame,(width,0),(0, height),(0,0,255),5)
     else:
